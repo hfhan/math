@@ -255,6 +255,8 @@ verticalDistance2([4, 2], [1, 0], [3, 0]) // 2
 * 2000国家大地坐标系，是我国当前最新的国家大地坐标系，是全球地心坐标系在我国的具体体现，其原点为包括海洋和大气的整个地球的质量中心。
 * 正弦曲线投影下的长半轴参数 radius = 6370997 m
 * 正弦曲线投影是一种等面积的伪圆柱投影。规定纬线投影为平行直线，经线投影为对称于中央经线的正弦曲线，同一纬线上经距相等，纬距向两极缩小。主要用于小比例尺世界地图
+* 公式：haversin(d / r) = haversin(φ2 - φ1) + cos(φ2) * haversin(Δλ)
+* 其中：R为地球半径，取6378137； φ1, φ2 表示两点的纬度； Δλ 表示两点经度的差值
 */
 function haversineDistance(c1, c2) {
   let radius = 6378137
@@ -266,13 +268,42 @@ function haversineDistance(c1, c2) {
   return 2 * radius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 function toRadians(_){
+  //1°=π/180°   1rad=180°/π
+  //角度转弧度
   return _ * Math.PI / 180
 }
 haversineDistance([117, 34], [118, 39])  //563732.8911197125米
 haversineDistance([118, 39], [117, 34])  //563732.8911197125米
 ```
 
-### 2.9、根据一个点切割线段
+### 2.9 根据中心点坐标和距离(米)，计算范围
+```
+/* 
+* 根据中心点坐标和距离(米)，计算范围
+*/
+export function haversineLnglat(orign, dist){
+  let radius = 6378137
+  // 求东西两侧的的范围边界。在haversin公式中令φ1 = φ2(维度相同)
+  let lat = toRadians(orign[1])
+  let dlng = 2 * Math.asin(Math.sin(dist / (2 * radius)) / Math.cos(lat));
+  // 弧度转换成角度
+  dlng = toDegrees(dlng);
+  // 然后求南北两侧的范围边界，在haversin公式中令 Δλ = 0
+  let dlat = dist / 6378137;
+  // 弧度转换成角度
+  dlat = toDegrees(dlat);
+  return [orign[0] - dlng, orign[1] - dlat, orign[0] + dlng, orign[1] + dlat]
+}
+function toDegrees(_){
+  //1°=π/180°   1rad=180°/π
+  //弧度转角度
+  return _ * 180 / Math.PI
+}
+//haversineLnglat([117, 34], 5000) //[116.94582179841282, 33.955084235794025, 117.05417820158718, 34.044915764205975]
+//haversineLnglat([117, 34], 6000) //[116.93498615776213, 33.94610108295283, 117.06501384223787, 34.05389891704717]
+```
+
+### 2.10、根据一个点切割线段
 ```
 /* 
 * 根据一个点切割线段
@@ -319,7 +350,7 @@ getClosestPoint([[0, 1], [2, 3], [5, 6], [3, 4], [4, 4]], [3, 5])
 */
 ```
 
-### 2.10、线段与线段的交点
+### 2.11、线段与线段的交点
 ```
 /* 
 * 线段与线段的交点
@@ -359,7 +390,7 @@ intersects([[0,0],[1,1]], [[3,0],[2,1]])  //null
 intersects([[0,0],[1,1]], [[3,0],[0,1]])  //[0.75, 0.75]
 ```
 
-### 2.11、线与线的所有交点
+### 2.12、线与线的所有交点
 ```
 /* 
 * 线与线的所有交点
@@ -396,7 +427,7 @@ lineIntersect([[0, 0], [0, 1], [1, 3], [3, 2], [5, 0]], [[-1, 0], [4, 3]])
 //[{"index1":1,"index2":1,"coords":[0,0.6]},{"index1":3,"index2":1,"coords":[2.6363636363636367,2.1818181818181817]}]
 ```
 
-### 2.12、判断线段路径是顺时针还是逆时针
+### 2.13、判断线段路径是顺时针还是逆时针
 ```
 /* 
 * 判断线段路径是顺时针还是逆时针
@@ -427,7 +458,7 @@ isClockwise([[0,0],[1,1],[1,0],[0,0]]) // -0.5 顺时针
 isClockwise([[0,0],[1,0],[1,1],[0,0]]) //  0.5 逆时针
 ```
 
-### 2.13、判断线段路径是顺时针还是逆时针
+### 2.14、判断线段路径是顺时针还是逆时针
 ```
 /* 
 * 判断线段路径是顺时针还是逆时针
@@ -472,7 +503,7 @@ isClockwise2([[0,0],[1,1],[1,0],[0,0]]) // -1 顺时针
 isClockwise2([[0,0],[1,0],[1,1],[0,0]]) //  1 逆时针
 ```
 
-### 2.14、简化线 与 平滑线
+### 2.15、简化线 与 平滑线
 ```
 /* 
 * 简化线 与 平滑线
@@ -819,141 +850,5 @@ function judge(coordsA, coordsB){
 }
 ```
 
-### 3.13、线切割多边形(闭合线)
-```
-/* 
-* 线切割多边形(闭合线)
-* 使用线将多边形切割为一个个小多边形
-* truf中类似的有：
-* 差异 通过从第一个多边形中剪切第二个多边形来找到两个多边形之间的差异。
-* truf.difference://turfjs.org/docs/#difference
-* 相交 取两个多边形，并找到它们的交点。如果它们相交，则返回相交边界。如果它们不相交，则返回undefined。
-* truf.intersect://turfjs.org/docs/#intersect
-*/
-function splitPolygonByLine(polygon, line){
-  let polygonItem = { coords: polygon }
-  _splitPolygonByLine(polygonItem, line)
-  return getChildrenPolygons([polygonItem])
-}
-function _splitPolygonByLine(polygonItem, lineCoords){
-  if(polygonItem.children && polygonItem.children.length){
-    return polygonItem.children.forEach(polygon => {
-      _splitPolygonByLine(polygon, lineCoords)
-    });
-  }
 
-  lineCoords = lineCoords.slice();
-  let points = lineIntersect(lineCoords, polygonItem.coords, 2)
-  //console.log('points', points)
-  if(points.length >= 2){
-    //判断线的开始点在面内还是面外，以判断哪两个点练成的线在面外，舍弃在外面的
-    let startOut = pointInPolygon3(lineCoords[0], polygonItem.coords)
-    let point1Out = pointInPolygon3(lineCoords[points[0].index1], polygonItem.coords)
-    if(startOut && !point1Out){
-      lineCoords = lineCoords.slice(points[0].index1);
-      return _splitPolygonByLine(polygonItem, lineCoords)
-    }
-
-    let newPolygons = splitPolygon(polygonItem, lineCoords, points);
-    //console.log('newPolygons', newPolygons)
-    if(newPolygons.length >= 2){
-      polygonItem.children = newPolygons
-
-      lineCoords = lineCoords.slice(points[1].index1)
-      newPolygons.forEach(polygon => {
-        _splitPolygonByLine(polygon, lineCoords)
-      })
-    }
-  }
-}
-
-function splitPolygon(polygonItem, lineCoords, points){
-  let result = [];
-
-  //lineCoords = lineCoords.slice()
-  let polygonCoords = polygonItem.coords
-  
-  let startIndex = 0, endIndex = 0, lineIndex = 0
-
-  points.sort((a,b)=>a.index1 - b.index1)
-  
-  points.reduce((prePoint, point, index) => {
-    startIndex = prePoint.index1
-    endIndex = point.index1
-
-    let line;
-    if(endIndex == startIndex){
-      //return point
-      line = [prePoint.coords, point.coords]
-    }else{
-      line = lineCoords.slice(startIndex, endIndex)
-      line.unshift(prePoint.coords)
-      line.push(point.coords)
-    };
-
-    lineIndex = endIndex
-
-    let p1, p2 = polygonCoords.slice();
-    if(prePoint.index2 > point.index2){
-      startIndex = point.index2
-      endIndex = prePoint.index2
-
-      p1 = polygonCoords.slice(startIndex, endIndex)
-      p1 = p1.concat(line)
-      p1.push(p1[0])
-
-      line.reverse()
-      p2 = p2.slice(0, startIndex).concat(line).concat( p2.slice(endIndex) )
-    }else if(prePoint.index2 < point.index2){
-      startIndex = prePoint.index2
-      endIndex = point.index2
-
-      p2 = p2.slice(0, startIndex).concat(line).concat( p2.slice(endIndex) )
-
-      line.reverse()
-      p1 = polygonCoords.slice(startIndex, endIndex)
-      p1 = p1.concat(line)
-      p1.push(p1[0])
-    }else{
-      //startIndex = endIndex = prePoint.index1
-      p1 = line.slice()
-
-      let pc = polygonItem.coords[point.index2 - 1]
-      if(dist2d(prePoint.coords, pc) > dist2d(point.coords, pc)){
-        line.reverse()
-      }
-
-      p2.splice(point.index2, 0, ...line)
-    }
-
-    result.push({ coords: p1 }, { coords: p2 })
-
-    return point
-  })
-
-  return result
-}
-function getChildrenPolygons(polygons){
-  let result = []
-  polygons.forEach(item => {
-    if(item.children){
-      result = result.concat( getChildrenPolygons(item.children) )
-    }else if(getArea(item.coords) > 0){
-      result.push(item.coords)
-    }
-  });
-  
-  return result
-}
-splitPolygonByLine([[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]], [[-1, 0], [6, 12], [12, 2], [-1, 9]])
-/* 
-[
-  [[0,1.7142857142857142],[0,8.461538461538462],[2.995121951219513,6.848780487804878],[0,1.7142857142857142]],
-  [[0,10],[4.833333333333334,10],[2.995121951219513,6.848780487804878],[0,8.461538461538462],[0,10]],
-  [[10,10],[10,5.333333333333334],[7.2,10],[10,10]],
-  [[4.833333333333334,10],[7.2,10],[10,5.333333333333334],[10,3.076923076923077],[2.9951219512195113,6.848780487804879],[4.833333333333334,10]],
-  [[0,0],[0,1.7142857142857142],[2.9951219512195113,6.848780487804879],[10,3.076923076923077],[10,0],[0,0]]
-]
-*/
-```
-
+github地址：[https://github.com/hfhan/math](https://github.com/hfhan/math)
