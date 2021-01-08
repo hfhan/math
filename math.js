@@ -1,22 +1,24 @@
 /* 
-* 常用空间分析函数
+* 常用空间分析函数: hfhan
 * 包含 点、线、面 之间的相互关系
 * 本文主要记录一些自己开发中常用的一些分析函数，比较正宗和全面的可以看一些空间分析库，比如前端的 Turf 和 JSTS
 */
 
+'use strict';
+
 // 点 -------------------------------------------------------------------------
 
 // 点到点的距离
-function dist2d(coord1, coord2) {
+export function dist2d(coord1, coord2) {
   let dx = coord1[0] - coord2[0];
   let dy = coord1[1] - coord2[1];
   return Math.sqrt(dx * dx + dy * dy)
 }
-dist2d([1, 1], [4, 5]) // 5
+//dist2d([1, 1], [4, 5]) // 5
 
 
 //判断两个点集是否相等
-function equals(coord1, coord2) {
+export function equals(coord1, coord2) {
   let equals = true;
   for (let i = coord1.length - 1; i >= 0; --i){
     if (coord1[i] != coord2[i]) {
@@ -26,14 +28,14 @@ function equals(coord1, coord2) {
   }
   return equals
 }
-equals([1, 3], [1, 3]) // true
-equals([1, 3, 1], [1, 3, 2]) // false
+//equals([1, 3], [1, 3]) // true
+//equals([1, 3, 1], [1, 3, 2]) // false
 
 
 // 线 -------------------------------------------------------------------------
 
 // 线段的长度
-function formatLength(coords) {
+export function formatLength(coords) {
   coords = coords || []
   let length = 0
   //通过遍历坐标计算两点之前距离，进而得到整条线的长度
@@ -42,11 +44,11 @@ function formatLength(coords) {
   }
   return length
 }
-formatLength([[1, 0], [2, 1], [3, 0], [4, 2]]) // 5.06449510224598
+//formatLength([[1, 0], [2, 1], [3, 0], [4, 2]]) // 5.06449510224598
 
 
 // 根据偏移量偏移一条线段
-function lineOffset(coords, deltaX, deltaY){
+export function lineOffset(coords, deltaX, deltaY){
   deltaX = deltaX || 0
   deltaX = isNaN(deltaX) ? 0 : deltaX
   deltaY = deltaY || 0
@@ -60,12 +62,12 @@ function lineOffset(coords, deltaX, deltaY){
   })
   return coords
 }
-lineOffset([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]], 2, 3)
+//lineOffset([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]], 2, 3)
 //         [[3, 4], [4, 6], [5, 6], [6, 5], [4, 3]]
 
 
 // 线段上距离点P最近的一个点
-function getNearestCoord(point, lines) {
+export function getNearestCoord(point, lines) {
   let d, res = { dist: Infinity }
 	if(!(Array.isArray(lines[0]) && Array.isArray(lines[0][0]))){
 		lines = [lines]
@@ -83,7 +85,7 @@ function getNearestCoord(point, lines) {
 	
 	return res.point ? res : null;
 }
-getNearestCoord([2.2, 3.1], [[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
+//getNearestCoord([2.2, 3.1], [[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
 // {dist: 0.5099019513592785, index: 1, point: [2, 3]}
 
 /* 
@@ -92,7 +94,7 @@ getNearestCoord([2.2, 3.1], [[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
 * 特殊情况如点在线段上、点在端点、点在线段延长线上等等的情况全部适用于此公式，只是作为特殊情况出现，无需另作讨论。这也是矢量算法思想的优势所在。
 * 函数返回值：point 投影坐标  dist 点P到投影距离  type 垂足位置，不为0表示垂足在线段外
 */
-function pointToSegmentDist(point, point1, point2){
+export function pointToSegmentDist(point, point1, point2){
   let x = point[0], x1 = point1[0], x2 = point2[0]
   let y = point[1], y1 = point1[1], y2 = point2[1]
 
@@ -131,13 +133,13 @@ function pointToSegmentDist(point, point1, point2){
     dist: Math.sqrt((x - px) * (x - px) + (py - y) * (py - y))
   };
 }
-pointToSegmentDist([1, 3], [0, 1], [3, 1]); 
+//pointToSegmentDist([1, 3], [0, 1], [3, 1]); 
 //{ dist: 2, point: [1, 1], type: 0 }
 
 /* 
 * pointToSegmentDist变种：点P到直线AB的垂足及最短距离
 */
-function pointToFootDist(point, point1, point2){
+export function pointToFootDist(point, point1, point2){
   let x = point[0], x1 = point1[0], x2 = point2[0]
   let y = point[1], y1 = point1[1], y2 = point2[1]
 
@@ -164,7 +166,7 @@ function pointToFootDist(point, point1, point2){
     dist: Math.sqrt((x - px) * (x - px) + (py - y) * (py - y)) //点P到垂足距离
   };
 }
-pointToFootDist([3, 1], [1, 0], [3, 0])
+//pointToFootDist([3, 1], [1, 0], [3, 0])
 // {dist: 1, point: [3, 0], type: true}
 
 
@@ -176,7 +178,7 @@ pointToFootDist([3, 1], [1, 0], [3, 0])
 * Area = .5 * Bottom * H
 * Height = Area / .5 / Bottom
 */
-function verticalDistance(point, point1, point2){
+export function verticalDistance(point, point1, point2){
   if(equals(point1, point2)){
     return dist2d(point, point1)
   }
@@ -186,7 +188,7 @@ function verticalDistance(point, point1, point2){
 
   return height;
 }
-verticalDistance([4, 2], [1, 0], [3, 0]) // 2
+//verticalDistance([4, 2], [1, 0], [3, 0]) // 2
 
 /* 
 * 计算点P到直线AB的距离
@@ -199,7 +201,7 @@ verticalDistance([4, 2], [1, 0], [3, 0]) // 2
 * 直线斜率：k = (y1 - y2) / (x1 - x2)
 * 常数计算：b = y - kx
 */
-function verticalDistance2(point, point1, point2){
+export function verticalDistance2(point, point1, point2){
 	//如果point1[0] == point2[0] 说明是条竖着的线
 	if(point1[0] == point2[0]){
 		return Math.abs(point[0] - point1[0])
@@ -209,7 +211,7 @@ function verticalDistance2(point, point1, point2){
 		return Math.abs((k * point[0] - point[1] + b) / Math.sqrt( k * k + 1))
 	}
 }
-verticalDistance2([4, 2], [1, 0], [3, 0]) // 2
+//verticalDistance2([4, 2], [1, 0], [3, 0]) // 2
 
 
 /* 
@@ -226,8 +228,10 @@ verticalDistance2([4, 2], [1, 0], [3, 0]) // 2
 * 2000国家大地坐标系，是我国当前最新的国家大地坐标系，是全球地心坐标系在我国的具体体现，其原点为包括海洋和大气的整个地球的质量中心。
 * 正弦曲线投影下的长半轴参数 radius = 6370997 m
 * 正弦曲线投影是一种等面积的伪圆柱投影。规定纬线投影为平行直线，经线投影为对称于中央经线的正弦曲线，同一纬线上经距相等，纬距向两极缩小。主要用于小比例尺世界地图
+* 公式：haversin(d / r) = haversin(φ2 - φ1) + cos(φ2) * haversin(Δλ)
+* 其中：R为地球半径，取6378137； φ1, φ2 表示两点的纬度； Δλ 表示两点经度的差值
 */
-function haversineDistance(c1, c2) {
+export function haversineDistance(c1, c2) {
   let radius = 6378137
   let lat1 = toRadians(c1[1]);
   let lat2 = toRadians(c2[1]);
@@ -236,11 +240,38 @@ function haversineDistance(c1, c2) {
   let a = Math.sin(deltaLatBy2) * Math.sin(deltaLatBy2) + Math.sin(deltaLonBy2) * Math.sin(deltaLonBy2) * Math.cos(lat1) * Math.cos(lat2);
   return 2 * radius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
-function toRadians(_){
+export function toRadians(_){
+  //1°=π/180°   1rad=180°/π
+  //角度转弧度
   return _ * Math.PI / 180
 }
-haversineDistance([117, 34], [118, 39])  //563732.8911197125米
-haversineDistance([118, 39], [117, 34])  //563732.8911197125米
+//haversineDistance([117, 34], [118, 39])  //563732.8911197125米
+//haversineDistance([118, 39], [117, 34])  //563732.8911197125米
+
+
+/* 
+* 根据中心点坐标和距离(米)，计算范围
+*/
+export function haversineLnglat(orign, dist){
+  let radius = 6378137
+  // 求东西两侧的的范围边界。在haversin公式中令φ1 = φ2(维度相同)
+  let lat = toRadians(orign[1])
+  let dlng = 2 * Math.asin(Math.sin(dist / (2 * radius)) / Math.cos(lat));
+  // 弧度转换成角度
+  dlng = toDegrees(dlng);
+  // 然后求南北两侧的范围边界，在haversin公式中令 Δλ = 0
+  let dlat = dist / 6378137;
+  // 弧度转换成角度
+  dlat = toDegrees(dlat);
+  return [orign[0] - dlng, orign[1] - dlat, orign[0] + dlng, orign[1] + dlat]
+}
+function toDegrees(_){
+  //1°=π/180°   1rad=180°/π
+  //弧度转角度
+  return _ * 180 / Math.PI
+}
+//haversineLnglat([117, 34], 5000) //[116.94582179841282, 33.955084235794025, 117.05417820158718, 34.044915764205975]
+//haversineLnglat([117, 34], 6000) //[116.93498615776213, 33.94610108295283, 117.06501384223787, 34.05389891704717]
 
 
 /* 
@@ -251,7 +282,7 @@ haversineDistance([118, 39], [117, 34])  //563732.8911197125米
 * getNearestCoord 寻找的是线上真实存在的一点
 * pointToSegmentDist 寻找的点位于线上，但不一定真实存在与线上
 */
-function getClosestPoint(coords, point){
+export function getClosestPoint(coords, point){
   if(!coords || coords.length < 2) return [[], []]
 
   let squaredDistance = {dist: Infinity}, index
@@ -279,7 +310,7 @@ function getClosestPoint(coords, point){
 
   return [prearr, nextarr]
 }
-getClosestPoint([[0, 1], [2, 3], [5, 6], [3, 4], [4, 4]], [3, 5])
+//getClosestPoint([[0, 1], [2, 3], [5, 6], [3, 4], [4, 4]], [3, 5])
 /*
 [
 	[[0,1],[2,3],[3.5,4.5]],
@@ -292,7 +323,7 @@ getClosestPoint([[0, 1], [2, 3], [5, 6], [3, 4], [4, 4]], [3, 5])
 * 线段与线段的交点
 * 解线性方程组, 求线段AB与线段CD的交点坐标，如果没有交点，返回null
 */
-function intersects(coords1, coords2) {
+export function intersects(coords1, coords2) {
   let x1 = coords1[0][0];
   let y1 = coords1[0][1];
   let x2 = coords1[1][0];
@@ -322,8 +353,42 @@ function intersects(coords1, coords2) {
   }
   return null;
 }
-intersects([[0,0],[1,1]], [[3,0],[2,1]])  //null
-intersects([[0,0],[1,1]], [[3,0],[0,1]])  //[0.75, 0.75]
+//intersects([[0,0],[1,1]], [[3,0],[2,1]])  //null
+//intersects([[0,0],[1,1]], [[3,0],[0,1]])  //[0.75, 0.75]
+
+
+/* 
+* 线段与线段的交点
+* 两点式直线公式：(x - x1) / (x2 - x1) = (y - y1) / (y2 - y1)
+// --> x(y2 - y1) + y(x1 - x2) + x1(y1 - y2) + y1(x2 - x1) = 0
+// A = y2-y1, B = x1-x2, C = x1(y1 - y2) + y1(x2 - x1)
+// (x,y) = d2/(d1+d2) * (x3,y3) + d1/(d1+d2) * (x4,y4)
+// d2/(d1+d2) = |A*x4 + B*y4 + C|/(|A*x4 + B*y4 + C|+|A*x3 + B*y3 + C|)
+// d1/(d1+d2) = |A*x3 + B*y3 + C|/(|A*x4 + B*y4 + C|+|A*x3 + B*y3 + C|)
+*/
+export function detectIntersection(coords1, coords2) {
+  let a = coords1[0]
+  let b = coords1[1]
+  let c = coords2[0]
+  let d = coords2[1]
+
+  // whether intersect ?
+  let intersect = (isLeft(a, b, c) ^ isLeft(a, b, d)) && (isLeft(c, d, a) ^ isLeft(c, d, b))
+  if (!intersect) return null;
+
+  let d2 = Math.abs((b[1] - a[1]) * d[0] + (a[0] - b[0]) * d[1] + a[0] * (a[1] - b[1]) + a[1] * (b[0] - a[0]));
+  let d1 = Math.abs((b[1] - a[1]) * c[0] + (a[0] - b[0]) * c[1] + a[0] * (a[1] - b[1]) + a[1] * (b[0] - a[0]));
+  let x = d2 / (d1 + d2) * c[0] + d1 / (d1 + d2) * d[0];
+  let y = d2 / (d1 + d2) * c[1] + d1 / (d1 + d2) * d[1];
+  return [x, y];
+}
+function isLeft(point, point1, point2) {
+  let x1 = point1[0] - point[0]
+  let y1 = point1[1] - point[1]
+  let x2 = point2[0] - point[0]
+  let y2 = point2[1] - point[1]
+  return (-y1 * x2 + x1 * y2) > 0
+}
 
 
 /* 
@@ -334,7 +399,7 @@ intersects([[0,0],[1,1]], [[3,0],[0,1]])  //[0.75, 0.75]
 * 代码参考truf.lineIntersect：http://turfjs.org/docs/#lineIntersect
 * 如果交点为线的点，则会重复返回，包括返回的数据结构，都是为下面切割面函数splitPolygon服务的
 */
-function lineIntersect(line1, line2, count){
+export function lineIntersect(line1, line2, count){
   let result = []
 	for(let i = 1; i < line1.length; i++){
     let coords1 = [line1[i-1], line1[i]]
@@ -357,7 +422,7 @@ function lineIntersect(line1, line2, count){
   }
 	return result
 }
-lineIntersect([[0, 0], [0, 1], [1, 3], [3, 2], [5, 0]], [[-1, 0], [4, 3]])
+//lineIntersect([[0, 0], [0, 1], [1, 3], [3, 2], [5, 0]], [[-1, 0], [4, 3]])
 //[{"index1":1,"index2":1,"coords":[0,0.6]},{"index1":3,"index2":1,"coords":[2.6363636363636367,2.1818181818181817]}]
 
 
@@ -367,7 +432,7 @@ lineIntersect([[0, 0], [0, 1], [1, 3], [3, 2], [5, 0]], [[-1, 0], [4, 3]])
 * 返回值 d < 0  '顺时针' : d > 0  '逆时针'
 * truf对应实现truf.booleanClockwise://turfjs.org/docs/#booleanClockwise
 */
-function isClockwise(line){
+export function isClockwise(line){
   let length = line.length
   let d = 0
 
@@ -386,8 +451,8 @@ function isClockwise(line){
 
   return d
 }
-isClockwise([[0,0],[1,1],[1,0],[0,0]]) // -0.5 顺时针
-isClockwise([[0,0],[1,0],[1,1],[0,0]]) //  0.5 逆时针
+//isClockwise([[0,0],[1,1],[1,0],[0,0]]) // -0.5 顺时针
+//isClockwise([[0,0],[1,0],[1,1],[0,0]]) //  0.5 逆时针
 
 /* 
 * 判断线段路径是顺时针还是逆时针
@@ -397,7 +462,7 @@ isClockwise([[0,0],[1,0],[1,1],[0,0]]) //  0.5 逆时针
 * 为零时，p1-p2-p3   所走的方向不变，亦即三点在一直线上
 * 返回值 d < 0  '顺时针' : d > 0  '逆时针'
 */
-function isClockwise2(line){
+export function isClockwise2(line){
   let length = line.length
   let d = 0
 
@@ -428,8 +493,8 @@ function isClockwise2(line){
 
   return d
 }
-isClockwise2([[0,0],[1,1],[1,0],[0,0]]) // -1 顺时针
-isClockwise2([[0,0],[1,0],[1,1],[0,0]]) //  1 逆时针
+//isClockwise2([[0,0],[1,1],[1,0],[0,0]]) // -1 顺时针
+//isClockwise2([[0,0],[1,0],[1,1],[0,0]]) //  1 逆时针
 
 
 /* 
@@ -458,7 +523,7 @@ isClockwise2([[0,0],[1,0],[1,1],[0,0]]) //  1 逆时针
 // 多边形 -------------------------------------------------------------------------
 
 // 获取多边形边界范围
-function bbox(coords) {
+export function bbox(coords) {
   // x/经度最小值 y/纬度最小值 x/经度最大值 y/纬度最大值
   let res = [Infinity, Infinity, -Infinity, -Infinity];
   coords.forEach(coord => {
@@ -469,45 +534,45 @@ function bbox(coords) {
   })
   return res;
 }
-bbox([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
+//bbox([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
 // [1, 0, 4, 3]
 
 
 //判断两个边界范围的关系： a 是否包含 b
-function isContains(a, b) {
+export function isContains(a, b) {
   return a[0] <= b[0] &&
     a[1] <= b[1] &&
     b[2] <= a[2] &&
     b[3] <= a[3];
 }
-isContains([1, 0, 4, 3], [2, 2, 5, 5])  //false
-isContains([1, 0, 4, 3], [2, 1, 3, 2])  //true
+//isContains([1, 0, 4, 3], [2, 2, 5, 5])  //false
+//isContains([1, 0, 4, 3], [2, 1, 3, 2])  //true
 
 
 //判断两个边界范围的关系： a 与 b 是否有交集
-function isIntersects(a, b) {
+export function isIntersects(a, b) {
   return b[0] <= a[2] &&
     b[1] <= a[3] &&
     b[2] >= a[0] &&
     b[3] >= a[1];
 }
-isIntersects([1, 0, 4, 3], [2, 2, 5, 5])  //true
-isIntersects([1, 0, 4, 3], [5, 2, 5, 5])  //false
+//isIntersects([1, 0, 4, 3], [2, 2, 5, 5])  //true
+//isIntersects([1, 0, 4, 3], [5, 2, 5, 5])  //false
 
 
 // 获取多边形中心
-function center(coords) {
+export function center(coords) {
   let ext = bbox(coords);
   let x = (ext[0] + ext[2]) / 2;
   let y = (ext[1] + ext[3]) / 2;
   return [x, y];
 }
-center([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
+//center([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
 // [2.5, 1.5]
 
 
 // 获取多边形重心
-function centroid(coords) {
+export function centroid(coords) {
   let xSum = 0, ySum = 0, len = 0;
   coords.forEach(coord => {
     xSum += coord[0];
@@ -517,12 +582,12 @@ function centroid(coords) {
 
   return [xSum / len, ySum / len];
 }
-centroid([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
+//centroid([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
 // [2.4, 1.8]
 
 
 // 获取多边形质心
-function centerOfMass(coords) {
+export function centerOfMass(coords) {
   let centr = centroid(coords);
   let neutralizedPoints = coords.map(function (point$$1) {
     return [
@@ -549,7 +614,7 @@ function centerOfMass(coords) {
   }
 
   if (sArea === 0) {
-    return centre;
+    return centr;
   } else {
     // 计算有符号面积，并因式分解: x = 1 / 6A
     let area = sArea * 0.5;
@@ -561,7 +626,7 @@ function centerOfMass(coords) {
     ]
   }
 }
-centerOfMass([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
+//centerOfMass([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
 // [2.569230769230769, 1.8735042735042735]
 
 
@@ -573,7 +638,7 @@ centerOfMass([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]])
 * 那么：s = (x1y2-x2y1)/2 + (x2y3-x3y2)/2 +......+ (xny1-x1yn)/2
 * 获取的 s 是有向面积，需要取绝对值
 */
-function getArea(polygon){
+export function getArea(polygon){
   let area = 0;
   let len = polygon.length
   let x1 = polygon[len - 1][0]
@@ -587,8 +652,8 @@ function getArea(polygon){
   }
   return Math.abs(area / 2)
 }
-getArea([[0,0],[0,10],[10,10],[10,0]])  //100
-getArea([[0,0],[0,3],[4,0]])  //6
+//getArea([[0,0],[0,10],[10,10],[10,0]])  //100
+//getArea([[0,0],[0,3],[4,0]])  //6
 
 
 /* 
@@ -596,7 +661,7 @@ getArea([[0,0],[0,3],[4,0]])  //6
 * 注意，如果环是顺时针方向的，这个区域将是正的，否则它将是负的
 * 注意，投影及其长半轴参数radius的介绍这里不做叙述，可以看上面haversineDistance的相关介绍
 */
-function geodesicArea(coords) {
+export function geodesicArea(coords) {
   let radius = 6378137
   let area = 0, len = coords.length;
   if(len <= 2){ return area }
@@ -612,7 +677,7 @@ function geodesicArea(coords) {
   area = area * radius * radius / 2
   return Math.abs(area)
 }
-geodesicArea([[118, 39], [117, 34], [117, 33], [116, 36], [117, 40]])  //64519860945.307144平方米
+//geodesicArea([[118, 39], [117, 34], [117, 33], [116, 36], [117, 40]])  //64519860945.307144平方米
 
 
 /* 
@@ -626,7 +691,7 @@ geodesicArea([[118, 39], [117, 34], [117, 33], [116, 36], [117, 40]])  //6451986
 * 4、射线刚好经过多边形的一条边
 * truf对应实现truf.booleanPointInPolygon://turfjs.org/docs/#booleanPointInPolygon
 */
-function pointInPolygon(point, polygon) {
+export function pointInPolygon(point, polygon) {
   let px = point[0], py = point[1], flag = false
 
   let sx, sy, tx, ty
@@ -669,7 +734,7 @@ function pointInPolygon(point, polygon) {
 * 注意每个夹角都是有方向的，所以有可能是负值。360°（2π）相当于一次回转。
 * 当回转数为 0 时，点在闭合曲线外部。
 */
-function pointInPolygon2(point, polygon) {
+export function pointInPolygon2(point, polygon) {
   let px = point[0], py = point[1], sum = 0
 
   let sx, sy, tx, ty
@@ -705,7 +770,7 @@ function pointInPolygon2(point, polygon) {
 * 判断点是否在多边形内
 * openlayers中的方法
 */
-function pointInPolygon3(point, polygon) {
+export function pointInPolygon3(point, polygon) {
   let x = point[0], y = point[1]
   let wn = 0;
   let x1 = polygon[0][0];
@@ -740,7 +805,7 @@ function pointInPolygon3(point, polygon) {
 * truf对应实现 交叉 truf.booleanCrosses://turfjs.org/docs/#booleanCrosses
 * truf对应实现 相离 truf.booleanDisjoint://turfjs.org/docs/#booleanDisjoint
 */
-function judge(coordsA, coordsB){
+export function judge(coordsA, coordsB){
   let boola = coordsA.some(item => {
     return pointInPolygon3(item, coordsB)
   }) ? 1 : 0;
@@ -748,7 +813,8 @@ function judge(coordsA, coordsB){
     return pointInPolygon3(item, coordsA)
   }) ? 1 : 0;
 
-  return ['相离', 'A包含B', 'B包含A', '相交'][boola * 2 + boolb]
+  //return ['相离', 'A包含B', 'B包含A', '相交'][boola * 2 + boolb]
+  return boola * 2 + boolb
 }
 
 
@@ -761,7 +827,7 @@ function judge(coordsA, coordsB){
 * 相交 取两个多边形，并找到它们的交点。如果它们相交，则返回相交边界。如果它们不相交，则返回undefined。
 * truf.intersect://turfjs.org/docs/#intersect
 */
-function splitPolygonByLine(polygon, line){
+export function splitPolygonByLine(polygon, line){
   let polygonItem = { coords: polygon }
   _splitPolygonByLine(polygonItem, line)
   return getChildrenPolygons([polygonItem])
@@ -876,7 +942,7 @@ function getChildrenPolygons(polygons){
   
   return result
 }
-splitPolygonByLine([[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]], [[-1, 0], [6, 12], [12, 2], [-1, 9]])
+//splitPolygonByLine([[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]], [[-1, 0], [6, 12], [12, 2], [-1, 9]])
 /* 
 [
   [[0,1.7142857142857142],[0,8.461538461538462],[2.995121951219513,6.848780487804878],[0,1.7142857142857142]],
