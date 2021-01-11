@@ -77,6 +77,27 @@ lineOffset([[1, 1], [2, 3], [3, 3], [4, 2], [2, 0]], 2, 3)
 
 ```
 
+
+### 2.2、根据偏移量偏移一条线段
+```
+//根据距离和角度偏移一条线段
+function offsetLine(line, d, angle){
+  //let line = [[1, 1], [4, 2], [5, 5], [7, 6]]
+  //let d = 1 
+  //let angle = 30
+
+  //斜边长度d已知，角度angle已知
+  //对边长度就是y的偏移量 就是 d * sin(angle) ==> d * Math.sin(angle * Math.PI / 180)
+  //邻边长度就是x的偏移量 就是 d * cos(angle) ==> d * Math.cos(angle * Math.PI / 180)
+  let ox = d * Math.cos(angle * Math.PI / 180)
+  let oy = d * Math.sin(angle * Math.PI / 180)
+  return line.map(coords => [coords[0] + ox, coords[1] + oy])
+}
+//offsetLine([[1, 1], [4, 2], [5, 5], [7, 6]], 5, 30)
+//[[5.330127018922194,3.4999999999999996],[8.330127018922195,4.5],[9.330127018922195,7.5],[11.330127018922195,8.5]]
+```
+
+
 ### 2.3、线段上距离点P最近的一个点
 ```
 // 线段上距离点P最近的一个点
