@@ -811,7 +811,7 @@ export function pointInPolygon3(point, polygon) {
 
 /* 
 * 两个多边形之间的关系：相交、包含、相离
-* https://segmentfault.com/a/1190000020916225
+* 0、先判断两个路径是否有交点，是的话就是相交
 * 1、遍历A多边形上的点，判断是否有坐标点在B多边形内 --- 返回结果 a
 * 2、遍历B多边形上的点，判断是否有坐标点在A多边形内 --- 返回结果 b
 * 如果a、b都为true，则两个多边形相交
@@ -823,6 +823,11 @@ export function pointInPolygon3(point, polygon) {
 * truf对应实现 相离 truf.booleanDisjoint://turfjs.org/docs/#booleanDisjoint
 */
 export function judge(coordsA, coordsB){
+  //先判断线有没有交点
+  let points = lineIntersect(coordsA, coordsB, 1)
+  if(points.length){
+    return 3 //相交
+  }
   let boola = coordsA.some(item => {
     return pointInPolygon3(item, coordsB)
   }) ? 1 : 0;
@@ -833,139 +838,3 @@ export function judge(coordsA, coordsB){
   //return ['相离', 'A包含B', 'B包含A', '相交'][boola * 2 + boolb]
   return boola * 2 + boolb
 }
-
-
-/* 
-* 线切割多边形(闭合线)
-* 使用线将多边形切割为一个个小多边形
-* truf中类似的有：
-* 差异 通过从第一个多边形中剪切第二个多边形来找到两个多边形之间的差异。
-* truf.difference://turfjs.org/docs/#difference
-* 相交 取两个多边形，并找到它们的交点。如果它们相交，则返回相交边界。如果它们不相交，则返回undefined。
-* truf.intersect://turfjs.org/docs/#intersect
-*/
-export function splitPolygonByLine(polygon, line){
-  let polygonItem = { coords: polygon }
-  _splitPolygonByLine(polygonItem, line)
-  return getChildrenPolygons([polygonItem])
-}
-function _splitPolygonByLine(polygonItem, lineCoords){
-  if(polygonItem.children && polygonItem.children.length){
-    return polygonItem.children.forEach(polygon => {
-      _splitPolygonByLine(polygon, lineCoords)
-    });
-  }
-
-  lineCoords = lineCoords.slice();
-  let points = lineIntersect(lineCoords, polygonItem.coords, 2)
-  //console.log('points', points)
-  if(points.length >= 2){
-    //判断线的开始点在面内还是面外，以判断哪两个点练成的线在面外，舍弃在外面的
-    let startOut = pointInPolygon3(lineCoords[0], polygonItem.coords)
-    let point1Out = pointInPolygon3(lineCoords[points[0].index1], polygonItem.coords)
-    if(startOut && !point1Out){
-      lineCoords = lineCoords.slice(points[0].index1);
-      return _splitPolygonByLine(polygonItem, lineCoords)
-    }
-
-    let newPolygons = splitPolygon(polygonItem, lineCoords, points);
-    //console.log('newPolygons', newPolygons)
-    if(newPolygons.length >= 2){
-      polygonItem.children = newPolygons
-
-      lineCoords = lineCoords.slice(points[1].index1)
-      newPolygons.forEach(polygon => {
-        _splitPolygonByLine(polygon, lineCoords)
-      })
-    }
-  }
-}
-
-function splitPolygon(polygonItem, lineCoords, points){
-  let result = [];
-
-  //lineCoords = lineCoords.slice()
-  let polygonCoords = polygonItem.coords
-  
-  let startIndex = 0, endIndex = 0, lineIndex = 0
-
-  points.sort((a,b)=>a.index1 - b.index1)
-  
-  points.reduce((prePoint, point, index) => {
-    startIndex = prePoint.index1
-    endIndex = point.index1
-
-    let line;
-    if(endIndex == startIndex){
-      //return point
-      line = [prePoint.coords, point.coords]
-    }else{
-      line = lineCoords.slice(startIndex, endIndex)
-      line.unshift(prePoint.coords)
-      line.push(point.coords)
-    };
-
-    lineIndex = endIndex
-
-    let p1, p2 = polygonCoords.slice();
-    if(prePoint.index2 > point.index2){
-      startIndex = point.index2
-      endIndex = prePoint.index2
-
-      p1 = polygonCoords.slice(startIndex, endIndex)
-      p1 = p1.concat(line)
-      p1.push(p1[0])
-
-      line.reverse()
-      p2 = p2.slice(0, startIndex).concat(line).concat( p2.slice(endIndex) )
-    }else if(prePoint.index2 < point.index2){
-      startIndex = prePoint.index2
-      endIndex = point.index2
-
-      p2 = p2.slice(0, startIndex).concat(line).concat( p2.slice(endIndex) )
-
-      line.reverse()
-      p1 = polygonCoords.slice(startIndex, endIndex)
-      p1 = p1.concat(line)
-      p1.push(p1[0])
-    }else{
-      //startIndex = endIndex = prePoint.index1
-      p1 = line.slice()
-
-      let pc = polygonItem.coords[point.index2 - 1]
-      if(dist2d(prePoint.coords, pc) > dist2d(point.coords, pc)){
-        line.reverse()
-      }
-
-      p2.splice(point.index2, 0, ...line)
-    }
-
-    result.push({ coords: p1 }, { coords: p2 })
-
-    return point
-  })
-
-  return result
-}
-function getChildrenPolygons(polygons){
-  let result = []
-  polygons.forEach(item => {
-    if(item.children){
-      result = result.concat( getChildrenPolygons(item.children) )
-    }else if(getArea(item.coords) > 0){
-      result.push(item.coords)
-    }
-  });
-  
-  return result
-}
-//splitPolygonByLine([[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]], [[-1, 0], [6, 12], [12, 2], [-1, 9]])
-/* 
-[
-  [[0,1.7142857142857142],[0,8.461538461538462],[2.995121951219513,6.848780487804878],[0,1.7142857142857142]],
-  [[0,10],[4.833333333333334,10],[2.995121951219513,6.848780487804878],[0,8.461538461538462],[0,10]],
-  [[10,10],[10,5.333333333333334],[7.2,10],[10,10]],
-  [[4.833333333333334,10],[7.2,10],[10,5.333333333333334],[10,3.076923076923077],[2.9951219512195113,6.848780487804879],[4.833333333333334,10]],
-  [[0,0],[0,1.7142857142857142],[2.9951219512195113,6.848780487804879],[10,3.076923076923077],[10,0],[0,0]]
-]
-*/
