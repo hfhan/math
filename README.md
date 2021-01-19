@@ -848,7 +848,7 @@ function pointInPolygon3(point, polygon) {
 ```
 /* 
 * 两个多边形之间的关系：相交、包含、相离
-* https://segmentfault.com/a/1190000020916225
+* 0、先判断两个路径是否有交点，是的话就是相交
 * 1、遍历A多边形上的点，判断是否有坐标点在B多边形内 --- 返回结果 a
 * 2、遍历B多边形上的点，判断是否有坐标点在A多边形内 --- 返回结果 b
 * 如果a、b都为true，则两个多边形相交
@@ -860,6 +860,11 @@ function pointInPolygon3(point, polygon) {
 * truf对应实现 相离 truf.booleanDisjoint://turfjs.org/docs/#booleanDisjoint
 */
 function judge(coordsA, coordsB){
+  //先判断线有没有交点
+  let points = lineIntersect(coordsA, coordsB, 1)
+  if(points.length){
+    return 3 //相交
+  }
   let boola = coordsA.some(item => {
     return pointInPolygon3(item, coordsB)
   }) ? 1 : 0;
