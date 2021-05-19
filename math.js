@@ -187,6 +187,50 @@ export function pointToFootDist(point, point1, point2){
 // {dist: 1, point: [3, 0], type: true}
 
 
+/* 
+ * 已知三角形ABC三个顶点坐标(P1, P2, P3)，底边BC上有一点D，且AD长度r已知，求D点坐标
+ * BC的长度为d2，设点D到B点的比例为k，则D点坐标为
+ * x = (x3 - x2) * k + x2
+ * y = (y3 - y2) * k + y2
+ * 根据AD距离得出公式：(x1 - x)² + (y1 - y)² = r² 
+ * 代入x,y 得：((y3 - y2)² + (x3 - x2)²) * k² + (2 * (x3 - x2) * (x2 - x1) + 2(y3 - y2) * (y2 - y1)) * k + (x1² + x2² + y1² + y2² - 2 * x1 * x2 - 2 * y1 * y2 - r²) = 0
+ * 一元二次方程的解得出k：a * x² + b * x + c = 0  ==> X = (-b ± (b² - 4ac) ^ 1/2) / 2a
+*/
+export function getPointByDist(p1, p2, p3, r){
+  if(equals(p2, p3)){
+    return p2
+  }
+
+  let x1 = p1[0], x2 = p2[0], x3 = p3[0]
+  let y1 = p1[1], y2 = p2[1], y3 = p3[1]
+  let a = (y3 - y2) ** 2 + (x3 - x2) ** 2
+  let b = 2 * (x3 - x2) * (x2 - x1) + 2 * (y3 - y2) * (y2 - y1)
+  let c = x1 ** 2 + x2 ** 2 + y1 ** 2 + y2 ** 2 - 2 * x1 * x2 - 2 * y1 * y2 - r ** 2
+
+  let z = b ** 2 - 4 * a * c
+  if(z < 0){
+    return null
+  }
+  /* if(z == 0){
+    let k = -b / (2 * a)
+    let x = (x3 - x2) * k + x2
+    let y = (y3 - y2) * k + y2
+    return [x, y]
+  } */
+
+  let k1 = (-b + Math.sqrt(z)) / (2 * a)
+  let k2 = (-b - Math.sqrt(z)) / (2 * a)
+  let kk = Math.min(k1 < 0 ? Infinity : k1, k2 < 0 ? Infinity : k2)
+  if(kk > 1){
+    return null
+  }
+  let x = (x3 - x2) * kk + x2
+  let y = (y3 - y2) * kk + y2
+  return [x, y]
+}
+//getPointByDist([3, 4], [1, 1], [4, 0], 3.6) //[1.0202273020830888, 0.9932575659723037]
+
+
 /*
 * 计算点P到直线AB的距离
 * 使用三角形面积，计算线AP在直线AB方向上的投影
@@ -512,6 +556,71 @@ export function isClockwise2(line){
 }
 //isClockwise2([[0,0],[1,1],[1,0],[0,0]]) // -1 顺时针
 //isClockwise2([[0,0],[1,0],[1,1],[0,0]]) //  1 逆时针
+
+
+//根据连续的三个点，用矢量判断夹角大小和方向
+/* 
+  向量点积、向量点乘，又称向量的积(不是向量积)、数量积
+  两个向量的数量积等于它们对应坐标的乘积的和。即：若a=(x1,y1),b=(x2,y2)，则a·b=x1·x2+y1·y2
+  公式：a·b = xa * xb + ya * yb
+  公式：a·b = |a||b|·cosθ   θ为向量a与向量b的夹角
+  几何意义：向量a在向量b方向上的投影与向量b的模的乘积。是一个标量
+  几何意义：数量积a·b等于a的长度|a|与b在a的方向上的投影|b|cosθ的乘积
+  cosθ = a·b / (|a||b|)
+  θ = Math.acos(a·b / (|a||b|))   0 < θ <= 2PI
+  θ = θ * 180 / Math.PI
+
+  公式：|a| = Math.sqrt(xa * xa + ya * ya)  向量a的长度
+  公式：|b| = Math.sqrt(xb * xb + yb * yb)  向量b的长度
+
+  向量叉积、向量叉乘，又称向量积(不是向量的积)：
+  公式：c = a x b = xa * yb - ya * xb
+  公式：|c| = |a x b| = |a||b|·sinθ
+  几何意义：c是垂直a、b所在平面，且以|b|·sinθ为高、|a|为底的平行四边形的面积。是一个矢量
+  向量a × 向量b（×为向量叉乘），
+  若结果小于0，表示向量b在向量a的顺时针方向；
+  若结果大于0，表示向量b在向量a的逆时针方向；
+  若等于0，表示向量a与向量b平行。
+*/
+export function getAngleBy3Point(point1, point2, point3) {
+  let xa = point2[0] - point1[0]
+  let xb = point3[0] - point2[0]
+  let ya = point2[1] - point1[1]
+  let yb = point3[1] - point2[1]
+
+  //direction 大于0 逆时针, 小于0 顺时针, 等于0 平行
+  let angle = 0, direction = 0
+
+  let _a = Math.sqrt(xa * xa + ya * ya)
+  let _b = Math.sqrt(xb * xb + yb * yb)
+  if(_a && _b){
+    let p = xa * xb + ya * yb
+
+    angle = Math.acos(p / (_a * _b))
+    angle = angle / Math.PI * 180
+    direction = xa * yb - ya * xb
+    direction = direction < 0 ? -1 : direction > 0 ? 1 : 0
+  }
+  
+  return { angle, direction }
+}
+
+// 判断一个多边形是不是凹多边形
+// 凸多边形两个相邻的的向量方向应该是一样的(排除平行线时的情况)，所以乘积不会小于0，小于0则是凹多边形
+export function IsConcavePolygon(points){
+  let direction = 0
+  for(let i = 0, l = points.length; i < l; i++){
+      let res = getAngleBy3Point(points[i == 0 ? (l - 1) : (i - 1)], points[i], points[i == (l - 1) ? 0 : (i + 1)])
+      //乘积小于0，说明方向不一致，为凹多边形
+      if(direction * res.direction < 0){
+          return true
+      }
+      direction = direction || res.direction
+  }
+  return false
+}
+// IsConcavePolygon([[0, 0], [0, 5], [5, 5], [2, 2], [5, 0]])  // true
+// IsConcavePolygon([[0, 0], [0, 5], [5, 5], [5, 0], [0, 0]])   // false
 
 
 /* 
