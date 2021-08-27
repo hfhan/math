@@ -894,7 +894,11 @@ export function pointInPolygon2(point, polygon) {
 
 /* 
 * 判断点是否在多边形内
-* openlayers中的方法
+* openlayers中的方法，也是使用的射线法，但是他根据https://mentin.medium.com/which-predicate-cb608b470471中的描述
+* 使用的判断依据是contains而不是covers，即点位于线上不算做包含
+* 但它仍然有问题，下面两个例子要么都为false，要么都为true
+* pointInPolygon3([110, 0], [[110, 0], [100, 10], [110, 30], [120, 10]]) => false
+* pointInPolygon3([110, 0], [[110, 0], [110, 50], [150, 50], [150, 0]]) => true
 */
 export function pointInPolygon3(point, polygon) {
   let x = point[0], y = point[1]
